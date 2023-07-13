@@ -1,21 +1,31 @@
 <script>
 	import CharacterList from '../CharacterList.svelte';
-	import Character from '../Character.js';
 	import CharacterDisplay from '../CharacterDisplay.svelte';
+	import { charactersStore, fetchCharacters } from '../charactersStore.js';
+	import NewCharacter from '../NewCharacter.svelte';
+	import { onMount } from 'svelte';
 
 	let currentCharacter;
 	let characters = [];
+	charactersStore.subscribe((value) => {
+		characters = value;
+	});
 	let modalOpen;
+	let createNew = false;
+
+	onMount(() => {
+		if(localStorage) {
+			if(localStorage.getItem('characters')) {
+				fetchCharacters();
+			}
+		}
+		else {
+			console.log('No local storage available');
+		}
+	});
 
 	function toggleModal() {
 		modalOpen = !modalOpen;
-	}
-
-	function createNewCharacter() {
-		const newCharacter = new Character();
-
-		characters = [...characters, newCharacter];
-		currentCharacter = newCharacter;
 	}
 
 	function characterCreation() {
@@ -30,21 +40,31 @@
 		<button class="exitBtn" on:click={toggleModal}>close</button>
 
 		<div class="modalContent">
-            <h2>Character Creation</h2>
-            <div>
-                <button on:click={() => {location.href="./create"}}>Create from Scratch</button>
-                <button>Create from Template</button>
-                <button>Import</button>
-            </div>
+			<h2>Character Creation</h2>
+			<div>
+				<button
+					on:click={() => {
+						createNew = true;
+						toggleModal();
+					}}>Create from Scratch</button
+				>
+				<button>Create from Template</button>
+				<button>Import</button>
+			</div>
 			<button on:click={toggleModal}>Cancel</button>
 		</div>
 	</div>
 {/if}
 
 {#if characters.length > 0}
-	<CharacterList {characters} />
+	<CharacterList {characters} bind:currentCharacter />
+	<button on:click={() => (createNew = true)}>Create New?</button>
 {:else}
 	<button on:click={characterCreation}>Get Started!</button>
+{/if}
+
+{#if createNew}
+	<NewCharacter bind:createNew />
 {/if}
 
 {#if currentCharacter}
